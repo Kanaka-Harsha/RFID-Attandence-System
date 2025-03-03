@@ -1,91 +1,91 @@
-#include <WiFi.h>
-#include <HTTPClient.h>
-#include <SPI.h>
-#include <MFRC522.h>
+#include <WiFi.h>                       // Include WiFi library for ESP32 Wi-Fi functionality
+#include <HTTPClient.h>                  // Include HTTPClient library for HTTP requests
+#include <SPI.h>                         // Include SPI library for communication with peripherals
+#include <MFRC522.h>                     // Include MFRC522 library for interfacing with the RFID module
 
-#define SS_PIN  5
-#define RST_PIN 21
-#define GREEN_LED 2
-#define RED_LED 15 
-#define buzz 22
+#define SS_PIN  5                        // Define Slave Select pin for the RFID module
+#define RST_PIN 21                       // Define Reset pin for the RFID module
+#define GREEN_LED 2                      // Define GPIO pin for the green LED
+#define RED_LED 15                       // Define GPIO pin for the red LED
+#define buzz 22                           // Define GPIO pin for the buzzer
 
-const char* ssid = "Your_SSID";
-const char* password = "Your_Password";
-const char* serverUrl = "http://Your_Host:3000/mark-attendance";
+const char* ssid = "Your_SSID";          // Wi-Fi SSID
+const char* password = "Your_Password";  // Wi-Fi password
+const char* serverUrl = "http://Your_Host:3000/mark-attendance"; // Server URL for attendance marking
 
-MFRC522 rfid(SS_PIN, RST_PIN);
-WiFiClient client;
-HTTPClient http;
+MFRC522 rfid(SS_PIN, RST_PIN);           // Create an MFRC522 object to interface with the RFID module
+WiFiClient client;                       // Create a WiFiClient object to handle HTTP requests
+HTTPClient http;                         // Create an HTTPClient object for sending HTTP requests
 
 void setup() 
 {
-    Serial.begin(115200);
-    SPI.begin();
-    rfid.PCD_Init();
+    Serial.begin(115200);                // Initialize serial communication at 115200 baud rate
+    SPI.begin();                         // Initialize SPI communication
+    rfid.PCD_Init();                     // Initialize the RFID reader
 
-    pinMode(GREEN_LED, OUTPUT);
-    pinMode(RED_LED, OUTPUT);
-    pinMode(buzz,OUTPUT);
+    pinMode(GREEN_LED, OUTPUT);          // Set the green LED pin as output
+    pinMode(RED_LED, OUTPUT);            // Set the red LED pin as output
+    pinMode(buzz, OUTPUT);               // Set the buzzer pin as output
 
-    WiFi.begin(ssid, password);
-    Serial.print("Connecting to WiFi...");
+    WiFi.begin(ssid, password);          // Start the Wi-Fi connection
+    Serial.print("Connecting to WiFi...");// Print message to serial monitor
     while (WiFi.status() != WL_CONNECTED) 
     {
-        delay(1000);
-        Serial.print(".");
+        delay(1000);                     // Wait for the Wi-Fi connection
+        Serial.print(".");               // Print a dot while connecting
     }
     
-    Serial.println("\nConnected!");
+    Serial.println("\nConnected!");       // Print a message once connected to Wi-Fi
 }
 
 void loop() 
 {
     if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) 
     {
-        return;
+        return;                           // Exit if no new card is present or card read fails
     }
 
-    String uid = "";
+    String uid = "";                      // Initialize an empty string to store the UID
     for (byte i = 0; i < rfid.uid.size; i++) 
     {
-        uid += String(rfid.uid.uidByte[i], HEX);
+        uid += String(rfid.uid.uidByte[i], HEX); // Convert each byte of the UID to a hexadecimal string
     }
-    uid.toUpperCase();
+    uid.toUpperCase();                    // Convert the UID string to uppercase
 
-    Serial.println("RFID UID: " + uid);
+    Serial.println("RFID UID: " + uid);   // Print the UID to the serial monitor
 
-    if (WiFi.status() == WL_CONNECTED) 
+    if (WiFi.status() == WL_CONNECTED)    // Check if the device is connected to Wi-Fi
     {
-        http.begin(client, serverUrl);
-        http.addHeader("Content-Type", "application/json");
+        http.begin(client, serverUrl);    // Start HTTP connection to the server
+        http.addHeader("Content-Type", "application/json");  // Set the header for JSON content
 
-        String jsonPayload = "{\"rfid_uid\": \"" + uid + "\"}";
-        int httpResponseCode = http.POST(jsonPayload);
+        String jsonPayload = "{\"rfid_uid\": \"" + uid + "\"}"; // Create a JSON payload with the UID
+        int httpResponseCode = http.POST(jsonPayload); // Send POST request with the JSON payload
 
-        if (httpResponseCode == 200) 
+        if (httpResponseCode == 200)       // Check if the server responded with HTTP 200 OK
         { 
-            String response = http.getString();
-            Serial.println("✅ Valid: " + response);
+            String response = http.getString();   // Get the response from the server
+            Serial.println("✅ Valid: " + response); // Print valid response to serial monitor
 
-            digitalWrite(GREEN_LED, HIGH);
-            digitalWrite(buzz,HIGH);
-            delay(500);
-            digitalWrite(GREEN_LED, LOW);
-            digitalWrite(buzz,LOW);
+            digitalWrite(GREEN_LED, HIGH);        // Turn on the green LED
+            digitalWrite(buzz, HIGH);             // Turn on the buzzer
+            delay(500);                           // Wait for 500 milliseconds
+            digitalWrite(GREEN_LED, LOW);         // Turn off the green LED
+            digitalWrite(buzz, LOW);              // Turn off the buzzer
         } 
         else 
         { 
-            Serial.println("❌ Invalid Card!");
+            Serial.println("❌ Invalid Card!");  // Print invalid card message to serial monitor
 
-            digitalWrite(RED_LED, HIGH);
-            delay(500);
-            digitalWrite(RED_LED, LOW);
+            digitalWrite(RED_LED, HIGH);        // Turn on the red LED
+            delay(500);                         // Wait for 500 milliseconds
+            digitalWrite(RED_LED, LOW);         // Turn off the red LED
         }
 
-        http.end();
+        http.end();                          // End the HTTP request
     }
 
-    rfid.PICC_HaltA();
-    rfid.PCD_StopCrypto1();
-    delay(1000);
+    rfid.PICC_HaltA();                      // Halt the RFID card communication
+    rfid.PCD_StopCrypto1();                  // Stop encryption for the RFID reader
+    delay(1000);                             // Wait for 1 second before scanning the next card
 }
