@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="Attandance.js"></script>
+    <link rel="stylesheet" href="Attandance.css">
+
+    <title>Attendance Dashboard</title>
+</head>
+<body>
+    <h2>📊 Student Attendance Dashboard</h2>
+
+    <div id="attendance-summary" class="attendance-summary"></div>
+
+    <input type="text" id="search" onkeyup="searchTable()" placeholder="Search by Roll No, Name, UID...">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Roll Number</th>
+                <th>Name</th>
+                <th>RFID UID</th>
+                <th>Total Classes</th>
+                <th>Total Classes Present</th>
+                <th>Attendance %</th>
+            </tr>
+        </thead>
+        <tbody id="attendance-body"></tbody>
+    </table>
+
+    <footer>
+        <p>© 2025 K.Harsha, 2300100001, KL University, IoT. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>
