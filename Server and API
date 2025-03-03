@@ -4,7 +4,7 @@ async function fetchAttendance()
 {
     try 
     {
-        let response = await fetch("http://10.136.97.72:3000/attendance");
+        let response = await fetch("http://Your_IP_Address:3000/attendance");
         let data = await response.json();
         attendanceData = data.sort((a, b) => a.roll_number.localeCompare(b.roll_number)); // Sort by roll number
         renderTable(attendanceData);
