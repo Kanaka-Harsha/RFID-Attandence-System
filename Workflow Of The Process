@@ -1,0 +1,6 @@
+Workflow:
+The device connects to the Wi-Fi network.
+The system waits for an RFID card to be scanned.
+The UID of the scanned card is sent to a server to mark attendance.
+If the server validates the UID, the green LED lights up, and the buzzer sounds.
+If the UID is invalid, the red LED lights up.
