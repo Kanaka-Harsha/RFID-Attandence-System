@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="rep.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Dashboard</title>
+
+    <style>
+body 
+{
+    background: rgb(230, 240, 180);
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-family: 'Poppins', sans-serif;
+    padding-bottom: 0px;
+    text-align: center;
+    color: #e8f089;
+    margin: 0;
+}
+
+
+h2 
+{
+    background-image: linear-gradient(-195deg, rgb(255, 0, 132), rgb(10, 152, 247));
+    color: transparent;
+    background-clip: text;
+    font-size: 28px;
+    margin-bottom: 40px;
+    z-index: 1; 
+    text-align: center;
+    position:relative;
+}
+
+.attendance-summary 
+{
+    background: linear-gradient(200deg, #a02828, #ff0000);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 1;
+    position: relative;
+    background: transparent;
+}
+
+.attendance-summary p 
+{
+    background-image: linear-gradient(-195deg, rgb(21, 25, 251), rgb(13, 255, 45));
+    color: transparent;
+    background-clip: text;
+    text-align: center;
+    font-size: 18px;
+    margin: 5px 0;
+}
+
+table 
+{
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 1s ease-in-out;
+    backdrop-filter: blur(10px);
+}
+
+th, td 
+{
+    color: #000000;
+    padding: 10px;
+    border: 3px solid rgb(0, 0, 0);
+    text-align: center;
+    font-size: 16px;
+    
+}
+
+th 
+{
+    background: rgb(211, 86, 86);
+    padding: 10px;
+    border: 3px solid rgb(0, 0, 0); /* Borders restored */
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    font-display: swap;
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+tr:hover 
+{
+    background: rgb(229, 33, 33);
+    transition: 0.5s;
+}
+
+input 
+{
+    background: linear-gradient(200deg, #ffd7f9, #edf3f0);
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    width: 238px;
+    z-index: 1;
+    position: relative;
+}
+
+footer 
+{
+    padding-top: 10px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: bold;
+    background: linear-gradient(200deg, #2b2323, #305055);
+    width: 100%;
+    padding: 3px;
+    text-align: center;
+    margin-top: 30px;
+    animation: fadeIn 1s ease-in-out;
+    transition: 0.3s;
+    cursor: pointer;
+    z-index: 1;
+    position: relative;
+}
+
+@keyframes fadeIn 
+{
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+tbody tr.visible {
+    opacity: 10%;
+    transform: translateY(0);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+    </style>
+    
+</head>
+<body>
+    <script>
+        let attendanceData = [];
+const TOTAL_CLASSES = 60;
+
+async function fetchAttendance() 
+{
+    try 
+    {
+        let response = await fetch("http://10.32.6.249:3000/attendance", { cache: "no-store" });
+        let data = await response.json();
+        attendanceData = data.sort((a, b) => a.roll_number.localeCompare(b.roll_number));
+        renderTable(attendanceData);
+        updateAttendanceSummary(attendanceData);
+    } 
+    catch (error) 
+    {
+        console.error("❌ Error fetching data:", error);
+    }
+}
+
+
+function renderTable(data) 
+{
+    let tableBody = document.getElementById("attendance-body");
+    tableBody.innerHTML = "";
+
+    data.forEach(student => {
+        let attendancePercentage = parseFloat(student.attendance_percentage) || 0;
+
+        let row = `<tr>
+            <td>${student.roll_number}</td>
+            <td>${student.name}</td>
+           
+            <td>${TOTAL_CLASSES}</td>
+            <td>${student.attendance_count}</td>
+            <td>${attendancePercentage.toFixed(2)}%</td>
+        </tr>`;
+        tableBody.innerHTML += row;
+    });
+}
+
+
+function updateAttendanceSummary(data) 
+{
+    let totalAttendance = 0;
+    data.forEach(student => {
+        totalAttendance += parseFloat(student.attendance_percentage) || 0;
+    });
+
+    let avgAttendance = (totalAttendance / data.length).toFixed(2) || 0;
+
+    let summaryDiv = document.getElementById("attendance-summary");
+    summaryDiv.innerHTML = `
+        <p><strong>Total IoT Students:</strong> ${data.length}</p>
+        <p><strong>Total Number Of Classes:</strong> ${TOTAL_CLASSES}</p>   
+        <p><strong>Average IoT Attendance:</strong> ${avgAttendance}%</p>
+    `;
+}
+
+function searchTable() {
+    let input = document.getElementById("search").value.toLowerCase();
+    let rows = document.querySelectorAll("#attendance-body tr");
+
+    rows.forEach(row => {
+        let rollNumber = row.cells[0].innerText.toLowerCase();
+        let name = row.cells[1].innerText.toLowerCase();
+        if (rollNumber.includes(input) || name.includes(input)) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+
+
+
+async function refreshAttendanceAfterScan() 
+{
+    setTimeout(fetchAttendance, 100);
+}
+
+
+setInterval(fetchAttendance, 5000);
+window.onload = fetchAttendance();
+
+        </script>
+    
+    
+    <h2>📊 Student Attendance Dashboard</h2>
+
+    <div id="attendance-summary" class="attendance-summary"></div>
+
+    
+    <input type="text" id="search" onkeyup="searchTable()" placeholder="Search by Roll No, Name, Month" >
+
+    <table>
+        <thead>
+            <tr>
+                <th>Roll Number</th>
+                <th>Name</th>
+                <th>Total Classes</th>
+                <th>Total Classes Present</th>
+                <th>Attendance %</th>
+            </tr>
+        </thead>
+        <tbody id="attendance-body"></tbody>
+    </table>
+
+    <footer>
+        <p>© 2025 K.Harsha, 2300100001, KL University, IoT. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>
